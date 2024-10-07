@@ -44,6 +44,9 @@ func run() error {
 
 		// por diseño, es posible configurar el número máximo de pokemons
 		// que un entrenador puede tener en su Pokedex.
+		// Un entrenador malicioso podría configurar su Pokedex con un número
+		// de Pokemons superior al permitido, simplemente enviando un
+		// parámetro "max" en la query string con el valor deseado.
 		if r.URL.Query().Get("max") != "" {
 			fmt.Sscanf(r.URL.Query().Get("max"), "%d", &maxPokemon)
 		}
