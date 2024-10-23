@@ -1,0 +1,7 @@
+go 1.23.0
+
+use ./
+
+use ./pokeball/v1
+
+use ./pokeball/v2
