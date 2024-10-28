@@ -15,17 +15,20 @@ import (
 	"outdated-components/pokeball"
 )
 
+var secret = []byte("Pikachu")
+
 const (
 	MinimumInsignias = 8
+	passphrase       = "PokéPass_876((&^%$#	))."
 	MaxPokemon       = 100
 )
 
 type Trainer struct {
-	Name      string
-	Role      string
-	token     string // necesario para autenticar las peticiones de cada usuario
-	Insignias []string
-	pokedex   Pokedex
+	Name       string
+	Role       string
+	passphrase string // necesario para autenticar las peticiones de cada usuario
+	Insignias  []string
+	pokedex    Pokedex
 }
 
 type Pokedex struct {
@@ -42,10 +45,8 @@ func NewPokedex(maxPokemon int) Pokedex {
 var trainers map[string]*Trainer
 
 func main() {
-	secret := []byte("Pikachu")
-
-	// inicializar los entrenadores. Cada entrenador definirá su password,
-	// la cual será encriptada.
+	// inicializar los entrenadores. Cada entrenador definirá su passphrase,
+	// la cual servirá para encriptar su token de autorización.
 	trainers = map[string]*Trainer{
 		"ash": {
 			Name: "Ash",
@@ -54,7 +55,7 @@ func main() {
 				"Thunder Badge", "Marsh Badge", "Soul Badge", "Volcano Badge",
 				"Earth Badge", "Cascade Badge", "Boulder Badge", "Rainbow Badge",
 			},
-			token: "PokéPass_123((&^%$#	)).",
+			passphrase: "PokéPass_123((&^%$#	)).",
 		},
 		"misty": {
 			Name: "Misty",
@@ -63,7 +64,7 @@ func main() {
 				"Thunder Badge", "Marsh Badge", "Soul Badge", "Volcano Badge",
 				"Earth Badge", "Cascade Badge", "Boulder Badge", "Rainbow Badge",
 			},
-			token: "PokéPass_456((&^%$#	)).",
+			passphrase: "PokéPass_456((&^%$#	)).",
 		},
 	}
 
@@ -71,14 +72,13 @@ func main() {
 	// En un entorno de producción, las contraseñas deberían estar almacenadas
 	// en otro repositorio.
 	for key, tr := range trainers {
-		encrypted, err := encrypt(secret, tr.token)
+		encrypted, err := encrypt(secret, tr.passphrase)
 		if err != nil {
 			log.Fatalf("could not encrypt the secret for trainer %s: %v", tr.Name, err)
 		}
-		tr.token = encrypted
 		// log del secreto cifrado, para que podamos usarlo en la solicitud HTTP.
 		// En un entorno de producción, esto sería un error de seguridad!!!
-		log.Printf("%s:%s\n", key, tr.token)
+		log.Printf("%s:%s\n", key, encrypted)
 	}
 
 	if err := run(); err != nil {
@@ -94,8 +94,15 @@ func validateUser(username string, token string) error {
 		return errors.New("username does not exist")
 	}
 
-	if token != trainer.token {
-		return fmt.Errorf("user token is not valid: %s != %s", token, trainer.token)
+	decrypted, err := decrypt(token, trainer.passphrase)
+	if err != nil {
+		return fmt.Errorf("could not decrypt token: %v", err)
+	}
+
+	if string(decrypted) != string(secret) {
+		// mostrar el secret aquí es un error de seguridad, pero lo hacemos
+		// para demostrar que el token es incorrecto.
+		return fmt.Errorf("user token is not valid: %s != %s", token, secret)
 	}
 
 	if len(trainer.Insignias) < MinimumInsignias {
@@ -122,6 +129,37 @@ func encrypt(data []byte, passphrase string) (string, error) {
 	}
 
 	return hex.EncodeToString(gcm.Seal(nonce, nonce, data, nil)), nil
+}
+
+// decrypt descifra los datos cifrados con AES-GCM y devuelve el texto original.
+func decrypt(encrypted string, passphrase string) ([]byte, error) {
+	data, err := hex.DecodeString(encrypted)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode hex string: %v", err)
+	}
+
+	block, err := aes.NewCipher([]byte(passphrase))
+	if err != nil {
+		return nil, fmt.Errorf("could not create new cipher: %v", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("could not create new GCM: %v", err)
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(data) < nonceSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not decrypt data: %v", err)
+	}
+
+	return plaintext, nil
 }
 
 // checkAccess comprueba si la solicitud HTTP tiene un token válido,

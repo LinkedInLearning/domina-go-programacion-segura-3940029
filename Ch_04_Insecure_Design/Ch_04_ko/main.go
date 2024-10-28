@@ -11,8 +11,11 @@ import (
 	"net/http"
 )
 
+var secret = []byte("Pikachu")
+
 const (
 	MinimumInsignias = 8
+	passphrase       = "PokéPass_876((&^%$#	))."
 	MaxPokemon       = 100
 )
 
@@ -32,8 +35,6 @@ func NewPokedex(owner Trainer, maxPokemon int) Pokedex {
 }
 
 func main() {
-	secret := []byte("Pikachu")
-	passphrase := "PokéPass_876((&^%$#	))."
 	encrypted, err := encrypt(secret, passphrase)
 	if err != nil {
 		log.Fatalf("could not encrypt the secret: %v", err)
@@ -43,7 +44,7 @@ func main() {
 	// En un entorno de producción, esto sería un error de seguridad!!!
 	log.Println("Encrypted secret:", encrypted)
 
-	if err := run(encrypted); err != nil {
+	if err := run(); err != nil {
 		log.Fatalln(err)
 	}
 }
@@ -77,21 +78,57 @@ func encrypt(data []byte, passphrase string) (string, error) {
 	return hex.EncodeToString(gcm.Seal(nonce, nonce, data, nil)), nil
 }
 
+// decrypt descifra los datos cifrados con AES-GCM y devuelve el texto original.
+func decrypt(encrypted string, passphrase string) ([]byte, error) {
+	data, err := hex.DecodeString(encrypted)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode hex string: %v", err)
+	}
+
+	block, err := aes.NewCipher([]byte(passphrase))
+	if err != nil {
+		return nil, fmt.Errorf("could not create new cipher: %v", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("could not create new GCM: %v", err)
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(data) < nonceSize {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not decrypt data: %v", err)
+	}
+
+	return plaintext, nil
+}
+
 // hasToken comprueba si la solicitud HTTP tiene un token válido.
-func hasToken(r *http.Request, encrypted string) error {
+func hasToken(r *http.Request) error {
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		return fmt.Errorf("missing token")
 	}
 
-	if token != encrypted {
+	decrypted, err := decrypt(token, passphrase)
+	if err != nil {
+		return fmt.Errorf("decrypt: %v", err)
+	}
+
+	if string(secret) != string(decrypted) {
 		return fmt.Errorf("invalid token")
 	}
 
 	return nil
 }
 
-func run(encrypted string) error {
+func run() error {
 	// Ash tiene las 8 insignias, por lo que ya debería poder acceder a la ruta privada
 	trainer := Trainer{Name: "Ash", Role: "Trainer", Insignias: []string{
 		"Thunder Badge", "Marsh Badge", "Soul Badge", "Volcano Badge",
@@ -105,7 +142,7 @@ func run(encrypted string) error {
 		}
 
 		// comprobar si la solicitud HTTP tiene un token válido
-		if err := hasToken(r, encrypted); err != nil {
+		if err := hasToken(r); err != nil {
 			http.Error(w, err.Error(), http.StatusForbidden)
 			return
 		}
