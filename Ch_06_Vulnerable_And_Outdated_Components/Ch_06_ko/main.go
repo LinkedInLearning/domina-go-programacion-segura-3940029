@@ -187,8 +187,21 @@ func checkAccess(r *http.Request) (string, error) {
 	return username, nil
 }
 
+type Middleware func(http.HandlerFunc) http.HandlerFunc
+
+// CSPMiddleware aplica una política de seguridad de contenido a todas las respuestas HTTP.
+// Para ello escribe una cabecera Content-Security-Policy en cada respuesta, evitando ataques XSS.
+// Más información: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
+func CSPMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Security-Policy", "default-src 'self'")
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func run() error {
-	http.HandleFunc("/private", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/private", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// comprobar si la solicitud HTTP tiene un token válido
 		username, err := checkAccess(r)
 		if err != nil {
@@ -199,9 +212,9 @@ func run() error {
 		// Cualquiera con las 8 insignias, y que conozca el token secreto,
 		// puede liberar a Mewtwo,
 		fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
-	})
+	}))
 
-	http.HandleFunc("/capture", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/capture", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// comprobar si la solicitud HTTP tiene un token válido
 		username, err := checkAccess(r)
 		if err != nil {
@@ -225,10 +238,10 @@ func run() error {
 		} else {
 			fmt.Fprintf(w, "Oh no, %s! The %s ran away", username, pokemon.Name)
 		}
-	})
+	}))
 
 	// en este handler, un entrenador puede configurar su Pokedex
-	http.HandleFunc("/pokedex", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/pokedex", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// comprobar si la solicitud HTTP tiene un token válido
 		username, err := checkAccess(r)
 		if err != nil {
@@ -255,7 +268,7 @@ func run() error {
 		trainer.pokedex = NewPokedex(maxPokemon)
 
 		fmt.Fprintf(w, "Cool, %s! Your new Pokemon is ready! You can have %d pokemons", trainer.Name, trainer.pokedex.MaxPokemon)
-	})
+	}))
 
 	return http.ListenAndServe(":8080", nil)
 }
