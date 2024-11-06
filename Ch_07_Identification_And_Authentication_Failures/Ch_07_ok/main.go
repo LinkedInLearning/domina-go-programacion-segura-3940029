@@ -161,31 +161,6 @@ func decrypt(encrypted string, passphrase string) ([]byte, error) {
 	return plaintext, nil
 }
 
-// checkAccess comprueba si la solicitud HTTP tiene un token válido,
-// con el formato: "Authorization: username:token", y además verifica
-// que el usuario sea correcto (exista en la base de datos en memoria,
-// y además tenga las 8 medallas)
-func checkAccess(r *http.Request) (string, error) {
-	header := r.Header.Get("Authorization")
-	if header == "" {
-		return "", fmt.Errorf("missing Authorization header")
-	}
-
-	parts := strings.Split(header, ":")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("malformed Authorization header")
-	}
-
-	username := parts[0]
-	token := parts[1]
-
-	if err := validateUser(username, token); err != nil {
-		return "", fmt.Errorf("check access: %w", err)
-	}
-
-	return username, nil
-}
-
 type Middleware func(http.HandlerFunc) http.HandlerFunc
 
 // CSPMiddleware aplica una política de seguridad de contenido a todas las respuestas HTTP.
@@ -204,7 +179,10 @@ func CSPMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // y finalmente recuperarlo en el handler final.
 type usernameKey string
 
-// LoginMiddleware es un middleware que comprueba si la solicitud HTTP tiene un token válido.
+// LoginMiddleware es un middleware que comprueba si la solicitud HTTP tiene un token válido,
+// con el formato: "Authorization: username:token", y además verifica
+// que el usuario sea correcto (exista en la base de datos en memoria,
+// y además tenga las 8 medallas)
 func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
@@ -227,7 +205,7 @@ func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		// pass the username to the next handler
+		// pasar el usuario al siguiente handler
 		r = r.WithContext(context.WithValue(r.Context(), usernameKey("username"), username))
 
 		next.ServeHTTP(w, r)
