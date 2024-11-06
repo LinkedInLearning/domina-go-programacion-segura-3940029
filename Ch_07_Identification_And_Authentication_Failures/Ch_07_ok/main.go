@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -11,7 +10,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 )
 
 var secret = []byte("Pikachu")
@@ -159,57 +157,6 @@ func decrypt(encrypted string, passphrase string) ([]byte, error) {
 	}
 
 	return plaintext, nil
-}
-
-type Middleware func(http.HandlerFunc) http.HandlerFunc
-
-// CSPMiddleware aplica una política de seguridad de contenido a todas las respuestas HTTP.
-// Para ello escribe una cabecera Content-Security-Policy en cada respuesta, evitando ataques XSS.
-// Más información: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
-func CSPMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Security-Policy", "default-src 'self'")
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-// usernameKey es un tipo para la clave de contexto que contiene el nombre de usuario.
-// De esta forma, podemos pasar el nombre de usuario a través de los middlewares,
-// y finalmente recuperarlo en el handler final.
-type usernameKey string
-
-// LoginMiddleware es un middleware que comprueba si la solicitud HTTP tiene un token válido,
-// con el formato: "Authorization: username:token", y además verifica
-// que el usuario sea correcto (exista en la base de datos en memoria,
-// y además tenga las 8 medallas)
-func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		header := r.Header.Get("Authorization")
-		if header == "" {
-			http.Error(w, errors.New("missing Authorization header").Error(), http.StatusForbidden)
-			return
-		}
-
-		parts := strings.Split(header, ":")
-		if len(parts) != 2 {
-			http.Error(w, errors.New("malformed Authorization header").Error(), http.StatusForbidden)
-			return
-		}
-
-		username := parts[0]
-		token := parts[1]
-
-		if err := validateUser(username, token); err != nil {
-			http.Error(w, fmt.Errorf("validate user: %w", err).Error(), http.StatusForbidden)
-			return
-		}
-
-		// pasar el usuario al siguiente handler
-		r = r.WithContext(context.WithValue(r.Context(), usernameKey("username"), username))
-
-		next.ServeHTTP(w, r)
-	})
 }
 
 func run() error {
