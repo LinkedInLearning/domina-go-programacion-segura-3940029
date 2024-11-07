@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 var secret = []byte("Pikachu")
@@ -58,7 +59,7 @@ func main() {
 			Name: "Misty",
 			Role: "Trainer",
 			Insignias: []string{
-				"Thunder Badge", "Marsh Badge", "Soul Badge", "Volcano Badge",
+				"Thunder Badge", "Marsh Badge", "Soul Badge", "Island Badge",
 				"Earth Badge", "Cascade Badge", "Boulder Badge", "Rainbow Badge",
 			},
 			passphrase: "PokéPass_456((&^%$#	)).",
@@ -168,6 +169,26 @@ func run() error {
 		fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
 	})))
 
+	http.HandleFunc("/torneos/volcano", CSPMiddleware(LoginMiddleware(TournamentMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		username := r.Context().Value(usernameKey("username")).(string)
+
+		fmt.Fprintf(w, "Welcome again to the Volcano Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
+	}))))
+
+	http.HandleFunc("/torneos/island",
+		CSPMiddleware(
+			LoginMiddleware(
+				TournamentMiddleware(
+					func(w http.ResponseWriter, r *http.Request) {
+						username := r.Context().Value(usernameKey("username")).(string)
+
+						fmt.Fprintf(w, "Welcome again to the Island Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
+					},
+				),
+			),
+		),
+	)
+
 	// en este handler, un entrenador puede configurar su Pokedex
 	http.HandleFunc("/pokedex", CSPMiddleware(LoginMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		maxPokemon := 6
@@ -194,4 +215,14 @@ func run() error {
 	})))
 
 	return http.ListenAndServe(":8080", nil)
+}
+
+func (t *Trainer) HasBadge(badge string) bool {
+	for _, b := range t.Insignias {
+		// comparamos sin distinción entre mayúsculas y minúsculas
+		if strings.EqualFold(b, badge) {
+			return true
+		}
+	}
+	return false
 }

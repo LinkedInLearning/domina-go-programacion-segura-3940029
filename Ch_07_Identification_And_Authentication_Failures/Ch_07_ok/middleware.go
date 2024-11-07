@@ -56,3 +56,28 @@ func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// TournamentMiddleware es un middleware que comprueba si el usuario tiene el badge necesario
+// para acceder a la ruta HTTP. Si no lo tiene, devuelve un error 403 Forbidden.
+// Para ello, extrae el nombre del badge de la ruta HTTP, y comprueba si el usuario tiene ese badge.
+func TournamentMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username := r.Context().Value(usernameKey("username")).(string)
+
+		// leer el nombre de la ruta HTTP, y de ahí extraer el nombre del badge a buscar
+		parts := strings.Split(r.URL.Path, "/")
+		if len(parts) < 3 {
+			http.Error(w, "missing badge name", http.StatusBadRequest)
+			return
+		}
+
+		badgeName := parts[2] + " badge"
+
+		if !trainers[username].HasBadge(badgeName) {
+			http.Error(w, "missing badge "+badgeName, http.StatusForbidden)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

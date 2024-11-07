@@ -59,7 +59,8 @@ func main() {
 			Name: "Misty",
 			Role: "Trainer",
 			Insignias: []string{
-				"Thunder Badge", "Marsh Badge", "Soul Badge", "Volcano Badge",
+				// Misty tiene 8 insignias, pero no la de "Volcano", por lo que no podrá acceder.
+				"Thunder Badge", "Marsh Badge", "Soul Badge", "Island Badge",
 				"Earth Badge", "Cascade Badge", "Boulder Badge", "Rainbow Badge",
 			},
 			passphrase: "PokéPass_456((&^%$#	)).",
@@ -199,6 +200,36 @@ func run() error {
 		fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
 	}))
 
+	http.HandleFunc("/torneos/volcano", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		// comprobar si la solicitud HTTP tiene un token válido
+		username, err := checkAccess(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+
+		// introducimos un bug aquí, puesto que olvidamos verificar si el entrenador
+		// tiene la insignia "Volcano Badge" para acceder a este torneo.
+
+		fmt.Fprintf(w, "Welcome again to the Volcano Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
+	}))
+
+	http.HandleFunc("/torneos/island", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		// comprobar si la solicitud HTTP tiene un token válido
+		username, err := checkAccess(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusForbidden)
+			return
+		}
+
+		if trainers[username].HasBadge("Island Badge") {
+			fmt.Fprintf(w, "Welcome again to the Island Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
+			return
+		}
+
+		http.Error(w, errors.New("sorry, you need the Island Badge to enter this tournament").Error(), http.StatusForbidden)
+	}))
+
 	// en este handler, un entrenador puede configurar su Pokedex
 	http.HandleFunc("/pokedex", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// comprobar si la solicitud HTTP tiene un token válido
@@ -230,4 +261,13 @@ func run() error {
 	}))
 
 	return http.ListenAndServe(":8080", nil)
+}
+
+func (t *Trainer) HasBadge(badge string) bool {
+	for _, b := range t.Insignias {
+		if b == badge {
+			return true
+		}
+	}
+	return false
 }
