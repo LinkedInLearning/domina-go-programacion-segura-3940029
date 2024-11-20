@@ -161,7 +161,9 @@ func decrypt(encrypted string, passphrase string) ([]byte, error) {
 }
 
 func run() error {
-	http.HandleFunc("/private",
+	router := http.NewServeMux()
+
+	router.HandleFunc("/private",
 		LoggerMiddleware(
 			CSPMiddleware(
 				LoginMiddleware(func(w http.ResponseWriter, r *http.Request) {
@@ -175,7 +177,7 @@ func run() error {
 		),
 	)
 
-	http.HandleFunc("/torneos/volcano",
+	router.HandleFunc("/torneos/volcano",
 		LoggerMiddleware(
 			CSPMiddleware(
 				LoginMiddleware(
@@ -191,7 +193,7 @@ func run() error {
 		),
 	)
 
-	http.HandleFunc("/torneos/island",
+	router.HandleFunc("/torneos/island",
 		LoggerMiddleware(
 			CSPMiddleware(
 				LoginMiddleware(
@@ -208,7 +210,7 @@ func run() error {
 	)
 
 	// en este handler, un entrenador puede configurar su Pokedex
-	http.HandleFunc("/pokedex",
+	router.HandleFunc("/pokedex",
 		LoggerMiddleware(
 			CSPMiddleware(
 				LoginMiddleware(
@@ -240,7 +242,7 @@ func run() error {
 		),
 	)
 
-	return http.ListenAndServe(":8080", nil)
+	return http.ListenAndServe(":8080", router)
 }
 
 func (t *Trainer) HasBadge(badge string) bool {
