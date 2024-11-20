@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -60,11 +59,7 @@ func LoginMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func LoggerMiddleware(next http.Handler) http.Handler {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
+func LoggerMiddleware(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if r.URL.RawQuery != "" {

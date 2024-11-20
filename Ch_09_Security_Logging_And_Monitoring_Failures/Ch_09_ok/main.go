@@ -9,7 +9,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
+	"os"
+	"runtime/metrics"
 	"strings"
 )
 
@@ -79,7 +82,11 @@ func main() {
 		log.Printf("%s:%s\n", key, encrypted)
 	}
 
-	if err := run(); err != nil {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	if err := run(logger); err != nil {
 		log.Fatalln(err)
 	}
 }
@@ -160,7 +167,7 @@ func decrypt(encrypted string, passphrase string) ([]byte, error) {
 	return plaintext, nil
 }
 
-func run() error {
+func run(logger *slog.Logger) error {
 	router := http.NewServeMux()
 
 	router.HandleFunc("/private", func(w http.ResponseWriter, r *http.Request) {
@@ -208,8 +215,59 @@ func run() error {
 		fmt.Fprintf(w, "Cool, %s! Your new Pokemon is ready! You can have %d pokemons", trainer.Name, trainer.pokedex.MaxPokemon)
 	})
 
+	router.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		// Get descriptions for all supported metrics.
+		descs := metrics.All()
+
+		// Create a sample for each metric.
+		samples := make([]metrics.Sample, len(descs))
+		for i := range samples {
+			samples[i].Name = descs[i].Name
+		}
+
+		// Sample the metrics. Re-use the samples slice if you can!
+		metrics.Read(samples)
+
+		values := []any{}
+
+		// Iterate over all results.
+		for _, sample := range samples {
+			// Pull out the name and value.
+			name, value := sample.Name, sample.Value
+
+			// Handle each sample.
+			switch value.Kind() {
+			case metrics.KindUint64:
+				values = append(values, name, value.Uint64())
+			case metrics.KindFloat64:
+				values = append(values, name, value.Float64())
+			case metrics.KindFloat64Histogram:
+				// The histogram may be quite large, so let's just pull out
+				// a crude estimate for the median for the sake of this example.
+				values = append(values, name, value.Float64Histogram())
+			case metrics.KindBad:
+				// This should never happen because all metrics are supported
+				// by construction.
+				panic("bug in runtime/metrics package!")
+			default:
+				// This may happen as new metrics get added.
+				//
+				// The safest thing to do here is to simply log it somewhere
+				// as something to look into, but ignore it for now.
+				// In the worst case, you might temporarily miss out on a new metric.
+				logger.Error("%s: unexpected metric Kind: %v\n", name, value.Kind())
+			}
+		}
+
+		logger.Info("runtime metrics collected", values...)
+
+		appMetrics := []any{"trainers", len(trainers)}
+
+		logger.Info("application metrics collected", appMetrics...)
+	})
+
 	// configurar los middlewares en el orden correcto
-	configuredRouter := LoggerMiddleware(CSPMiddleware(LoginMiddleware(router)))
+	configuredRouter := LoggerMiddleware(logger, CSPMiddleware(LoginMiddleware(router)))
 
 	return http.ListenAndServe(":8080", configuredRouter)
 }
