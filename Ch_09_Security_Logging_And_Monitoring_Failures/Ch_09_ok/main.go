@@ -163,86 +163,55 @@ func decrypt(encrypted string, passphrase string) ([]byte, error) {
 func run() error {
 	router := http.NewServeMux()
 
-	router.HandleFunc("/private",
-		LoggerMiddleware(
-			CSPMiddleware(
-				LoginMiddleware(func(w http.ResponseWriter, r *http.Request) {
-					username := r.Context().Value(usernameKey("username")).(string)
+	router.HandleFunc("/private", func(w http.ResponseWriter, r *http.Request) {
+		username := r.Context().Value(usernameKey("username")).(string)
 
-					// Cualquiera con las 8 insignias, y que conozca el token secreto,
-					// puede liberar a Mewtwo,
-					fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
-				}),
-			),
-		),
-	)
+		// Cualquiera con las 8 insignias, y que conozca el token secreto,
+		// puede liberar a Mewtwo,
+		fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
+	})
 
-	router.HandleFunc("/torneos/volcano",
-		LoggerMiddleware(
-			CSPMiddleware(
-				LoginMiddleware(
-					TournamentMiddleware(
-						func(w http.ResponseWriter, r *http.Request) {
-							username := r.Context().Value(usernameKey("username")).(string)
+	router.HandleFunc("/torneos/volcano", func(w http.ResponseWriter, r *http.Request) {
+		username := r.Context().Value(usernameKey("username")).(string)
 
-							fmt.Fprintf(w, "Welcome again to the Volcano Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
-						},
-					),
-				),
-			),
-		),
-	)
+		fmt.Fprintf(w, "Welcome again to the Volcano Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
+	})
 
-	router.HandleFunc("/torneos/island",
-		LoggerMiddleware(
-			CSPMiddleware(
-				LoginMiddleware(
-					TournamentMiddleware(
-						func(w http.ResponseWriter, r *http.Request) {
-							username := r.Context().Value(usernameKey("username")).(string)
+	router.HandleFunc("/torneos/island", func(w http.ResponseWriter, r *http.Request) {
+		username := r.Context().Value(usernameKey("username")).(string)
 
-							fmt.Fprintf(w, "Welcome again to the Island Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
-						},
-					),
-				),
-			),
-		),
-	)
+		fmt.Fprintf(w, "Welcome again to the Island Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
+	})
 
 	// en este handler, un entrenador puede configurar su Pokedex
-	router.HandleFunc("/pokedex",
-		LoggerMiddleware(
-			CSPMiddleware(
-				LoginMiddleware(
-					func(w http.ResponseWriter, r *http.Request) {
-						maxPokemon := 6
+	router.HandleFunc("/pokedex", func(w http.ResponseWriter, r *http.Request) {
+		maxPokemon := 6
 
-						// por diseño, es posible configurar el número máximo de pokemons
-						// que un entrenador puede tener en su Pokedex.
-						if r.URL.Query().Get("max") != "" {
-							fmt.Sscanf(r.URL.Query().Get("max"), "%d", &maxPokemon)
-						}
+		// por diseño, es posible configurar el número máximo de pokemons
+		// que un entrenador puede tener en su Pokedex.
+		if r.URL.Query().Get("max") != "" {
+			fmt.Sscanf(r.URL.Query().Get("max"), "%d", &maxPokemon)
+		}
 
-						// no permitir que el entrenador tenga más pokemons que el máximo permitido
-						if maxPokemon > MaxPokemon {
-							maxPokemon = MaxPokemon
-						}
+		// no permitir que el entrenador tenga más pokemons que el máximo permitido
+		if maxPokemon > MaxPokemon {
+			maxPokemon = MaxPokemon
+		}
 
-						username := r.Context().Value(usernameKey("username")).(string)
+		username := r.Context().Value(usernameKey("username")).(string)
 
-						// en este diseño, todos los entrenadores tienen su propia Pokedex.
-						trainer := trainers[username]
+		// en este diseño, todos los entrenadores tienen su propia Pokedex.
+		trainer := trainers[username]
 
-						trainer.pokedex = NewPokedex(maxPokemon)
+		trainer.pokedex = NewPokedex(maxPokemon)
 
-						fmt.Fprintf(w, "Cool, %s! Your new Pokemon is ready! You can have %d pokemons", trainer.Name, trainer.pokedex.MaxPokemon)
-					},
-				),
-			),
-		),
-	)
+		fmt.Fprintf(w, "Cool, %s! Your new Pokemon is ready! You can have %d pokemons", trainer.Name, trainer.pokedex.MaxPokemon)
+	})
 
-	return http.ListenAndServe(":8080", router)
+	// configurar los middlewares en el orden correcto
+	configuredRouter := LoggerMiddleware(CSPMiddleware(LoginMiddleware(router)))
+
+	return http.ListenAndServe(":8080", configuredRouter)
 }
 
 func (t *Trainer) HasBadge(badge string) bool {

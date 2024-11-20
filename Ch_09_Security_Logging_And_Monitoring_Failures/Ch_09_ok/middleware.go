@@ -14,7 +14,7 @@ import (
 // CSPMiddleware aplica una política de seguridad de contenido a todas las respuestas HTTP.
 // Para ello escribe una cabecera Content-Security-Policy en cada respuesta, evitando ataques XSS.
 // Más información: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
-func CSPMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func CSPMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", "default-src 'self'")
 
@@ -31,7 +31,7 @@ type usernameKey string
 // con el formato: "Authorization: username:token", y además verifica
 // que el usuario sea correcto (exista en la base de datos en memoria,
 // y además tenga las 8 medallas)
-func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func LoginMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		header := r.Header.Get("Authorization")
 		if header == "" {
@@ -60,7 +60,7 @@ func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func LoggerMiddleware(next http.Handler) http.Handler {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -91,7 +91,7 @@ func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
 // TournamentMiddleware es un middleware que comprueba si el usuario tiene el badge necesario
 // para acceder a la ruta HTTP. Si no lo tiene, devuelve un error 403 Forbidden.
 // Para ello, extrae el nombre del badge de la ruta HTTP, y comprueba si el usuario tiene ese badge.
-func TournamentMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func TournamentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username := r.Context().Value(usernameKey("username")).(string)
 
