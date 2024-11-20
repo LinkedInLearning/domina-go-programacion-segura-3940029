@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 )
 
 // CSPMiddleware aplica una política de seguridad de contenido a todas las respuestas HTTP.
@@ -54,6 +57,34 @@ func LoginMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		r = r.WithContext(context.WithValue(r.Context(), usernameKey("username"), username))
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+func LoggerMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if r.URL.RawQuery != "" {
+			path = fmt.Sprintf("%s?%s", path, r.URL.RawQuery)
+		}
+
+		log.Info("request started", "method", r.Method, "path", path, "remoteaddr", r.RemoteAddr)
+
+		now := time.Now()
+
+		// envolvemos el http.ResponseWriter para poder registrar el código de estado
+		// los handlers sucesivos podrán modificar el código de estado de la respuesta HTTP,
+		// en el método WriteHeader.
+		lrw := &loggingResponseWriter{w, http.StatusOK}
+		next.ServeHTTP(lrw, r)
+
+		after := time.Since(now)
+
+		log.Info("request completed", "method", r.Method, "path", path, "remoteaddr", r.RemoteAddr,
+			"statuscode", lrw.statusCode, "since", after.String())
 	})
 }
 
