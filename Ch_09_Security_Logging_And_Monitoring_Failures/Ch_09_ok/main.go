@@ -86,7 +86,9 @@ func main() {
 		Level: slog.LevelInfo,
 	}))
 
-	if err := run(logger); err != nil {
+	appCounter := &counter{}
+
+	if err := run(logger, appCounter); err != nil {
 		log.Fatalln(err)
 	}
 }
@@ -167,7 +169,7 @@ func decrypt(encrypted string, passphrase string) ([]byte, error) {
 	return plaintext, nil
 }
 
-func run(logger *slog.Logger) error {
+func run(logger *slog.Logger, appCounter *counter) error {
 	router := http.NewServeMux()
 
 	router.HandleFunc("/private", func(w http.ResponseWriter, r *http.Request) {
@@ -261,13 +263,13 @@ func run(logger *slog.Logger) error {
 
 		logger.Info("runtime metrics collected", values...)
 
-		appMetrics := []any{"trainers", len(trainers)}
+		appMetrics := []any{"trainers/count", len(trainers), "requests/count", appCounter.Value()}
 
 		logger.Info("application metrics collected", appMetrics...)
 	})
 
 	// configurar los middlewares en el orden correcto
-	configuredRouter := LoggerMiddleware(logger, CSPMiddleware(LoginMiddleware(router)))
+	configuredRouter := LoggerMiddleware(logger, CounterMiddleware(appCounter, CSPMiddleware(LoginMiddleware(router))))
 
 	return http.ListenAndServe(":8080", configuredRouter)
 }

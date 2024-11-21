@@ -7,8 +7,33 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
+
+type counter struct {
+	count int
+	mx    sync.Mutex
+}
+
+func (c *counter) Inc() {
+	c.mx.Lock()
+	c.count++
+	c.mx.Unlock()
+}
+
+func (c *counter) Value() int {
+	c.mx.Lock()
+	defer c.mx.Unlock()
+	return c.count
+}
+
+func CounterMiddleware(c *counter, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c.Inc()
+		next.ServeHTTP(w, r)
+	})
+}
 
 // CSPMiddleware aplica una política de seguridad de contenido a todas las respuestas HTTP.
 // Para ello escribe una cabecera Content-Security-Policy en cada respuesta, evitando ataques XSS.
