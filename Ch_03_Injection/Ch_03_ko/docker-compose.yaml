@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      POSTGRES_USER: gopher
+      POSTGRES_PASSWORD: gopher
+      POSTGRES_DB: pokemon
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
