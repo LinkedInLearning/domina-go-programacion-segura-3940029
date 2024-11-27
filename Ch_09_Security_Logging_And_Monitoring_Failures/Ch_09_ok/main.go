@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -86,31 +85,6 @@ func main() {
 	if err := run(logger, appCounter); err != nil {
 		log.Fatalln(err)
 	}
-}
-
-// validateUser comprueba si el entrenador existe, y si tiene las insignias necesarias
-// para acceder a una ruta privada: al menos 8 insignias.
-func validateUser(username string, token string) error {
-	trainer, ok := trainers[username]
-	if !ok {
-		return errors.New("username does not exist")
-	}
-
-	decrypted, err := decrypt(token, trainer.passphrase)
-	if err != nil {
-		return fmt.Errorf("could not decrypt token: %v", err)
-	}
-
-	if string(decrypted) != string(secret) {
-		// mostrar el secret aquí es un error de seguridad, pero lo hacemos
-		// para demostrar que el token es incorrecto.
-		return fmt.Errorf("user token is not valid: %s != %s", token, secret)
-	}
-
-	if len(trainer.Insignias) < MinimumInsignias {
-		return fmt.Errorf("only trainers with %d or more insignias are allowed", MinimumInsignias)
-	}
-	return nil
 }
 
 func run(logger *slog.Logger, appCounter *counter) error {
