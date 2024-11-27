@@ -76,7 +76,7 @@ func TournamentMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		badgeName := parts[2] + " badge"
 
 		if !trainers[username].HasBadge(badgeName) {
-			http.Error(w, "missing badge "+badgeName, http.StatusForbidden)
+			http.Error(w, "missing "+badgeName, http.StatusForbidden)
 			return
 		}
 
