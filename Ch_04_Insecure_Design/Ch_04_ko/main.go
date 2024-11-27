@@ -117,7 +117,7 @@ func run() error {
 		// la Pokedex de Ash, lo cual es un bug y al mismo tiempo un error de diseño.
 		pokedex := NewPokedex(trainer, maxPokemon)
 
-		fmt.Fprintf(w, "Cool, %s! Your new Pokemon is ready! You can have %d pokemons", trainer.Name, pokedex.MaxPokemon)
+		fmt.Fprintf(w, "Cool, %s! Your new Pokedex is ready! You can have %d pokemons", trainer.Name, pokedex.MaxPokemon)
 	})
 
 	return http.ListenAndServe(":8080", nil)

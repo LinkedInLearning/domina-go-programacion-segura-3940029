@@ -170,7 +170,7 @@ func run() error {
 
 		trainer.pokedex = NewPokedex(maxPokemon)
 
-		fmt.Fprintf(w, "Cool, %s! Your new Pokemon is ready! You can have %d pokemons", trainer.Name, trainer.pokedex.MaxPokemon)
+		fmt.Fprintf(w, "Cool, %s! Your new Pokedex is ready! You can have %d pokemons", trainer.Name, trainer.pokedex.MaxPokemon)
 	}))
 
 	return http.ListenAndServe(":8080", nil)
