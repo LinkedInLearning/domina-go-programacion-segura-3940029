@@ -111,6 +111,8 @@ func LoggerMiddleware(log *slog.Logger, next http.Handler) http.Handler {
 // TournamentMiddleware es un middleware que comprueba si el usuario tiene el badge necesario
 // para acceder a la ruta HTTP. Si no lo tiene, devuelve un error 403 Forbidden.
 // Para ello, extrae el nombre del badge de la ruta HTTP, y comprueba si el usuario tiene ese badge.
+// El formato del endpoint es: */tournaments/{badge}/, de modo que la segunda posición del path
+// contiene el nombre del badge.
 func TournamentMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username := r.Context().Value(usernameKey("username")).(string)
