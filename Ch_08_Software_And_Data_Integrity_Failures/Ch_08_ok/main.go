@@ -7,6 +7,10 @@ import (
 	"os/exec"
 )
 
+var allowedCommands = map[string]struct{}{
+	"ls": {},
+}
+
 type CommandPayload struct {
 	Command string `json:"command"`
 }
@@ -26,7 +30,12 @@ func managePokemonHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ejecución del comando sin validar su contenido
+	if _, exists := allowedCommands[payload.Command]; !exists {
+		http.Error(w, "Command not allowed", http.StatusBadRequest)
+		return
+	}
+
+	// Ejecución del comando válido
 	output, err := exec.Command("sh", "-c", payload.Command).Output()
 	if err != nil {
 		http.Error(w, "Command execution failed", http.StatusInternalServerError)
