@@ -258,6 +258,8 @@ func validateURL(imageURL string) (bool, error) {
 
 	// Check if the URL scheme is HTTP or HTTPS
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		slog.Error("incorrect URL scheme", "scheme", parsedURL.Scheme)
+
 		return false, errors.New("invalid URL scheme")
 	}
 
