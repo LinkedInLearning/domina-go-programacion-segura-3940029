@@ -263,11 +263,12 @@ func validateURL(imageURL string) (bool, error) {
 
 	// Check if the host is in the allowed domains
 	for _, domain := range allowedDomains {
-		fmt.Println(parsedURL.Path, domain)
 		if strings.HasSuffix(parsedURL.Host, domain) {
 			return true, nil
 		}
 	}
+
+	slog.Error("incorrect URL", "imageURL", imageURL, "parsedURL", parsedURL)
 
 	return false, errors.New("untrusted domain")
 }
