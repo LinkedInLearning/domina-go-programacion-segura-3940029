@@ -145,6 +145,8 @@ func run() error {
 		fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
 	}))
 
+	var ball pokeball.Ball
+
 	http.HandleFunc("/capture", CSPMiddleware(func(w http.ResponseWriter, r *http.Request) {
 		// comprobar si la solicitud HTTP tiene un token válido
 		username, err := checkAccess(r)
@@ -158,17 +160,19 @@ func run() error {
 
 		fmt.Fprintf(w, "A %s appeared. It's attack is %d\n", pokemon.Name, pokemon.Attack)
 
-		// el nuevo componente requiere al entrenador para lanzar una pokeball
-		ball := pokeball.NewBall(username)
+		if ball.Strength() == 0 {
+			// si la pokeball no ha sido inicializada, entonces inicializarla
+			ball = pokeball.NewBall(username)
+		}
 
 		// lanzar la pokeball e imprimir el resultado
 		fmt.Fprintln(w, ball.Throw())
 
 		if ball.Strength() > pokemon.Attack {
 			// Si la pokeball es más fuerte que el Pokemon, entonces el Pokemon es capturado.
-			fmt.Fprintf(w, "Cool, %s! You captured a %s", username, pokemon.Name)
+			fmt.Fprintf(w, "Cool, %s! You captured a %s. Ball: %d", username, pokemon.Name, ball.Strength())
 		} else {
-			fmt.Fprintf(w, "Oh no, %s! The %s ran away", username, pokemon.Name)
+			fmt.Fprintf(w, "Oh no, %s! The %s ran away. Ball: %d", username, pokemon.Name, ball.Strength())
 		}
 	}))
 
