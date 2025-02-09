@@ -16,10 +16,11 @@ func NewBall(trainerName string) Ball {
 	}
 }
 
-func (b Ball) Strength() int {
+func (b *Ball) Strength() int {
 	return b.strength
 }
 
-func (b Ball) Throw() string {
+func (b *Ball) Throw() string {
+	// el bug fue corregido en esta versión
 	return fmt.Sprintf("%s threw a Pokéball (%d)!", b.trainerName, b.strength)
 }

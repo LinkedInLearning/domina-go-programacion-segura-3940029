@@ -14,10 +14,13 @@ func NewBall() Ball {
 	}
 }
 
-func (b Ball) Strength() int {
+func (b *Ball) Strength() int {
 	return b.strength
 }
 
-func (b Ball) Throw() string {
+func (b *Ball) Throw() string {
+	// Introducimos un pequeño bug en la aplicación, de modo que la fuerza
+	// de la bola disminuye con cada lanzamiento.
+	b.strength--
 	return fmt.Sprintf("Pokéball (%d) thrown!", b.strength)
 }
