@@ -1,7 +1,4 @@
-DROP DATABASE IF EXISTS `pokemon`;
-CREATE DATABASE `pokemon`  /*!40100 DEFAULT CHARACTER SET utf8 */;
-
-CREATE TABLE pokedex (
+CREATE TABLE IF NOT EXISTS pokedex (
     id SERIAL PRIMARY KEY,
     trainerId integer NOT NULL,
     maxPokemon integer NOT NULL
