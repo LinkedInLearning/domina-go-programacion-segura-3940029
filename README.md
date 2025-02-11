@@ -10,11 +10,15 @@ DESCRIPCIÓN DEL CURSO
 
 ## Instrucciones
 
-Este repositorio tiene ramas (branches) para cada uno de los vídeos del curso. Puedes usar el menú emergente de la rama en GitHub para cambiar a una rama específica y echar un vistazo al curso en esa etapa, o puedes añadir `/tree/nombre_de_la_rama` a la URL para ir a la rama a la que quieres acceder.
+Este repositorio tiene directorios para cada uno de los vídeos del curso. Puedes usar el explorador de archivos en GitHub para cambiar a un directorio específico y echar un vistazo al curso en esa etapa, o puedes añadir `/tree/main/capitulo` a la URL para ir al directorio del capítulo al que quieres acceder. Cada video tiene un directorio para el código que muestra la vulnerabilidad, y otro directorio para el código que muestra la solución. Por ejemplo, puedes ir al directorio que contiene el código vulnerable del tercer capítulo añadiendo `/tree/main/Ch_03_Injection/Ch_03_ko` a la URL.
 
 ## Ramas
 
-Las ramas están estructuradas para corresponder a los vídeos del curso. La convención de nomenclatura es Capítulo#_Vídeo#. Por ejemplo, la rama denominada `02_03` corresponde al segundo capítulo y al tercer vídeo de ese capítulo. Algunas ramas tendrán un estado inicial y otro final. Están marcadas con las letras i («inicio») y f («fin»). La branch i tiene el mismo código que al principio del vídeo. La branch f tiene el mismo código que al final del vídeo. La rama master tiene el estado final del código que aparece en el curso.
+El video consta de una única rama, la rama `main`.
+
+## Directorios
+
+Los directorios están estructurados para corresponder a los vídeos del curso. La convención de nomenclatura es Ch_Capítulo#_Nombre_OWASP para el directorio del capítulo. Por ejemplo, el directorio denominado `Ch_02_Cryptographic_Failures` corresponde al segundo capítulo. Todos los capítulos contienen dos directorios, uno para el código con la vulnerabilidad, y otro para el código con la solución. Estarán marcados con las letras `ko` («vulnerable») y `ok` (solución»). El directorio `ko` tiene el mismo código que al principio del vídeo. El directorio `ok` tiene el mismo código que al final del vídeo.
 
 ## Instalación
 
