@@ -98,17 +98,17 @@ func run(logger *slog.Logger, appCounter *counter) error {
 		fmt.Fprintf(w, "Cool, %s! You can free Mewtwo now", username)
 	})
 
-	router.HandleFunc("/torneos/volcano", func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/torneos/volcano", TournamentMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username := r.Context().Value(usernameKey("username")).(string)
 
 		fmt.Fprintf(w, "Welcome again to the Volcano Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
-	})
+	})))
 
-	router.HandleFunc("/torneos/island", func(w http.ResponseWriter, r *http.Request) {
+	router.Handle("/torneos/island", TournamentMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username := r.Context().Value(usernameKey("username")).(string)
 
 		fmt.Fprintf(w, "Welcome again to the Island Tournament, %s (%s)!", username, strings.Join(trainers[username].Insignias, ","))
-	})
+	})))
 
 	// en este handler, un entrenador puede configurar su Pokedex
 	router.HandleFunc("/pokedex", func(w http.ResponseWriter, r *http.Request) {
