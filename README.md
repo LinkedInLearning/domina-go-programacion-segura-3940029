@@ -6,7 +6,7 @@ Este es el repositorio del curso de LinkedIn Learning `Domina Go: Programación 
 
 Consulta el archivo Readme en la rama main para obtener instrucciones e información actualizadas.
 
-DESCRIPCIÓN DEL CURSO
+Asegura tus aplicaciones desarrolladas en Go aplicando las mejores prácticas de seguridad. Este curso está diseñado para desarrolladores que desean prevenir vulnerabilidades críticas siguiendo el OWASP Top 10. A través de un enfoque práctico, comprenderás las amenazas más comunes y aprenderás a implementar estrategias efectivas para mitigarlas. Abordaremos las categorías de seguridad más relevantes y te mostraremos cómo escribir código seguro y robusto, protegiendo tus aplicaciones frente a riesgos y ataques. Refuerza tus habilidades y garantiza la seguridad de tus proyectos en Go.
 
 ## Instrucciones
 
