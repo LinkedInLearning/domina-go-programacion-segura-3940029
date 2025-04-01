@@ -20,14 +20,6 @@ El video consta de una única rama, la rama `main`.
 
 Los directorios están estructurados para corresponder a los vídeos del curso. La convención de nomenclatura es Ch_Capítulo#_Nombre_OWASP para el directorio del capítulo. Por ejemplo, el directorio denominado `Ch_02_Cryptographic_Failures` corresponde al segundo capítulo. Todos los capítulos contienen dos directorios, uno para el código con la vulnerabilidad, y otro para el código con la solución. Estarán marcados con las letras `ko` («vulnerable») y `ok` (solución»). El directorio `ko` tiene el mismo código que al principio del vídeo. El directorio `ok` tiene el mismo código que al final del vídeo.
 
-## Instalación
-
-1. Para utilizar estos archivos de ejercicios, debes tener descargado lo siguiente:
-   - [software]
-
-2. Clona este repositorio en tu máquina local usando la Terminal (macOS) o CMD (Windows), o una herramienta GUI como SourceTree.
-3. [Instrucciones específicas del curso].
-
 ### Docente
 
 **Manuel de la Peña**
@@ -35,7 +27,7 @@ Los directorios están estructurados para corresponder a los vídeos del curso. 
 Echa un vistazo a mis otros cursos en [LinkedIn Learning](https://www.linkedin.com/learning/instructors/manuel-de-la-pena).
 
 [0]: # (Replace these placeholder URLs with actual course URLs)
-[lil-course-url]: https://www.linkedin.com
-[lil-thumbnail-url]: https:
+[lil-course-url]: https://www.linkedin.com/learning/domina-go-programacion-segura
+[lil-thumbnail-url]: https://media.licdn.com/dms/image/v2/D4E0DAQFHzDe5FVofaA/learning-public-crop_675_1200/B4EZXxWB.SHMAY-/0/1743510839914?e=2147483647&v=beta&t=l3ArZ1uFPCN4QBUFaRUQXbwLD0ST2H-ZDTGxh-2pHZ0
 
 [1]: # (End of ES-Instruction ###############################################################################################)
